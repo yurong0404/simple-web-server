@@ -73,15 +73,16 @@ void serv_client(int fd, struct sockaddr_in *sin) {
 
 	printf("connected from %s:%d\n", inet_ntoa(sin->sin_addr), ntohs(sin->sin_port));
 	while((len = recv(fd, buf, sizeof(buf), 0)) > 0) {
-		printf("%s\n", buf);
 		header_decode(buf, &rst);
 		memset(buf, 0, sizeof(buf));
 		header_encode(buf, &rst);
 
+        printf("%s\n", buf);
 		if(send(fd, buf, strlen(buf), 0) < 0) {
 			perror("send");
 			exit(-1);
 		}
+        break;
 	}
 	printf("disconnected from %s:%d\n", inet_ntoa(sin->sin_addr), ntohs(sin->sin_port));
 	return;
