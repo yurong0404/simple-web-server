@@ -19,7 +19,11 @@ void split(char **arr, char *str, const char *del) {
 
 int check_directory(char *path) {
     DIR *dir;
-    if ((dir = opendir(path))) {
+    if (strcmp(path, "") == 0) {  // url is the root of web server
+        strcpy(path, "./");
+        return 1;
+    }
+    else if ((dir = opendir(path))) {
         closedir(dir);
         return 1;
     }
@@ -44,12 +48,12 @@ int check_object(char *path) {
     }
 }
 
-void read_directory(char *buf, char *dirname) {
+void read_directory(char *buf, char *dirname, int bufsz) {
     int old_stdout = 0;
     char command[128];
     int fd;
-
-    fd = open("temp", W_OK);
+    
+    fd = open("temp", O_RDWR|O_CREAT, S_IRWXU);
     old_stdout = dup(1);
     dup2(fd,1);
     strcpy(command, "ls -al ");
@@ -57,15 +61,42 @@ void read_directory(char *buf, char *dirname) {
     system(command);
     close(fd);
     fd = open("temp", R_OK);
-    read(fd, buf, 400);
+    read(fd, buf, bufsz);
+    close(fd);
+    system("rm temp");
     // recover stdout fd
     dup2(old_stdout, 1);
 }
 
 void create_html(char *html, char *text) {
+    char *arr[128] = { };
     strcpy(html, "<html>\n<head>\
-\n<meta http-equiv='content-type' content='text/html; charset=unicode'/>\
-\n</head>\n<body>\n<hr/>\n");
-    strcat(html, text);
+\n<meta http-equiv='content-type' content='text/html; charset=utf-8'/>\
+\n<style>\nbody{font-family: monospace;\nwhite-space: pre;}</style>\
+\n</head>\n<body>\n<hr/>");
+    split(arr, text, "\n");
+    for (int i=1 ; arr[i]!=0; i++) {
+        char *arr2[16] = { };
+        split(arr2, arr[i], " ");
+        int x=0;
+        for (; arr2[x+1]!=0;x++) {
+            strcat(html, arr2[x]);
+            strcat(html, "\t");
+        }
+        strcat(html, " <a href='");
+        strcat(html, arr2[x]);
+        strcat(html, "'>");
+        strcat(html, arr2[x]);
+        strcat(html, "</a>\n");
+    }
     strcat(html, "<hr/>\n</body>\n</html>");
+}
+
+int index_html_exist(DIR *dir) {
+    struct dirent *file;
+    while((file=readdir(dir))) {
+        if (strcmp(file->d_name, "index.html") == 0)
+            return 1;
+    }
+    return 0;
 }

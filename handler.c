@@ -4,6 +4,8 @@
 #include <dirent.h>
 #include <errno.h>
 #include <string.h>
+#include <sys/stat.h> 
+#include <fcntl.h>
 #include "header.h"
 #include "util.h"
 
@@ -17,15 +19,26 @@ void directory_handler(char *path, struct result *rst) {
         return;
     }
     if ((dir = opendir(path))) {
-        // TODO : FIND index.html or create index.html
-        char buf[1024];
-        char html[2048];
-        memset(buf, 0, 1024);
-        read_directory(buf, path);
-        create_html(html, buf);
-        rst->content = malloc(sizeof(buf));
-        strcpy(rst->content, buf);
-        rst->status_code = 200;
+        char html[4096];
+        memset(html, 0, 4096);
+        if (index_html_exist(dir)) {    // find index.html
+            int fd;
+            fd = open("index.html" , R_OK);
+            read(fd, html, sizeof(html));
+            close(fd);
+            rst->status_code = 200;
+            rst->content = malloc(sizeof(html));
+            strcpy(rst->content, html);
+        }
+        else {      // create index.html
+            char buf[2048];
+            memset(buf, 0, 2048);
+            read_directory(buf, path, sizeof(buf));
+            create_html(html, buf);
+            rst->content = malloc(sizeof(html));
+            strcpy(rst->content, html);
+            rst->status_code = 200;
+        }
         closedir(dir);
     }
     else if (errno == ENOENT) {

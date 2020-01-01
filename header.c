@@ -22,8 +22,6 @@ void header_decode(char *header, struct result *rst) {
 		else if (check_object(arr[1]+1)){
 			printf("true");
 			return;
-			//perror("header_decode");
-			//exit(-1);
 		}
 		else 
 			rst->status_code = 403;
