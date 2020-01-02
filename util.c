@@ -30,7 +30,7 @@ int check_directory(char *path) {
     else if (errno == ENOENT) {
         return 0;
     }
-    return -1;
+    return 0;
 }
 
 // check the path is a file and it exists, not a directory
@@ -44,6 +44,7 @@ int check_object(char *path) {
         return 1;
     }
     else {
+        //printf("false");
         return 0;
     }
 }
@@ -51,19 +52,17 @@ int check_object(char *path) {
 void read_directory(char *buf, char *dirname, int bufsz) {
     int old_stdout = 0;
     char command[128];
-    int fd;
-    
-    fd = open("temp", O_RDWR|O_CREAT, S_IRWXU);
+    int pipe_out[2];
+    pipe(pipe_out);
+
     old_stdout = dup(1);
-    dup2(fd,1);
+    dup2(pipe_out[1],1);
+    close(pipe_out[1]);
     strcpy(command, "ls -al ");
     strcat(command, dirname);
     system(command);
-    close(fd);
-    fd = open("temp", R_OK);
-    read(fd, buf, bufsz);
-    close(fd);
-    system("rm temp");
+    read(pipe_out[0], buf, bufsz);
+
     // recover stdout fd
     dup2(old_stdout, 1);
 }
@@ -99,4 +98,30 @@ int index_html_exist(DIR *dir) {
             return 1;
     }
     return 0;
+}
+
+void find_index_html(char *path, struct result *rst) {
+    int fd;
+    char html[4096];
+    memset(html, 0, 4096);
+    fd = open("index.html" , R_OK);
+    read(fd, html, sizeof(html));
+    close(fd);
+    rst->status_code = 200;
+    rst->content = malloc(sizeof(html));
+    memset(rst->content, 0, sizeof(html));
+    strcpy(rst->content, html);
+}
+
+void create_index_html(char *path, struct result *rst) {
+    char buf[2048];
+    char html[4096];
+    memset(buf, 0, 2048);
+    memset(html, 0, 4096);
+    read_directory(buf, path, sizeof(buf));
+    create_html(html, buf);
+    rst->content = malloc(sizeof(html));
+    memset(rst->content, 0, sizeof(html));
+    strcpy(rst->content, html);
+    rst->status_code = 200;
 }

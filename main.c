@@ -70,6 +70,7 @@ void serv_client(int fd, struct sockaddr_in *sin) {
 	int len;
 	char buf[2048];
 	struct result rst;
+	memset(buf, 0, sizeof(buf));
 
 	printf("connected from %s:%d\n", inet_ntoa(sin->sin_addr), ntohs(sin->sin_port));
 	while((len = recv(fd, buf, sizeof(buf), 0)) > 0) {
@@ -77,7 +78,6 @@ void serv_client(int fd, struct sockaddr_in *sin) {
 		memset(buf, 0, sizeof(buf));
 		header_encode(buf, &rst);
 
-        printf("%s\n", buf);
 		if(send(fd, buf, strlen(buf), 0) < 0) {
 			perror("send");
 			exit(-1);

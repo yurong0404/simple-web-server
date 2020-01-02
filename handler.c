@@ -9,35 +9,31 @@
 #include "header.h"
 #include "util.h"
 
-void static_object_handler() {
-
+void static_object_handler(char *path, struct result *rst) {
+    
 }
+
+void handler_301(char *path, struct result *rst) {
+    rst->status_code = 301;
+    rst->location = malloc(sizeof(char)*64);
+    memset(rst->location, 0, 64);
+    strcat(rst->location, "/");
+    strcat(rst->location, path);
+    strcat(rst->location, "/");
+}
+
 void directory_handler(char *path, struct result *rst) {
     DIR *dir;
     if (path[strlen(path)-1] != '/') {
-        rst->status_code = 301;
+        handler_301(path, rst);
         return;
     }
     if ((dir = opendir(path))) {
-        char html[4096];
-        memset(html, 0, 4096);
         if (index_html_exist(dir)) {    // find index.html
-            int fd;
-            fd = open("index.html" , R_OK);
-            read(fd, html, sizeof(html));
-            close(fd);
-            rst->status_code = 200;
-            rst->content = malloc(sizeof(html));
-            strcpy(rst->content, html);
+            find_index_html(path, rst);
         }
         else {      // create index.html
-            char buf[2048];
-            memset(buf, 0, 2048);
-            read_directory(buf, path, sizeof(buf));
-            create_html(html, buf);
-            rst->content = malloc(sizeof(html));
-            strcpy(rst->content, html);
-            rst->status_code = 200;
+            create_index_html(path, rst);
         }
         closedir(dir);
     }
@@ -49,3 +45,4 @@ void directory_handler(char *path, struct result *rst) {
 void CGI_handler() {
 
 }
+
