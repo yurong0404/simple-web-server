@@ -11,18 +11,15 @@
 
 
 void header_decode(char *header, struct result *rst) {
-	char *arr[128];
-	char filename[64];
+	char filename[128];
+	char querystr[256];
+	char request_method[16];
 	int fd=0;
-	memset(arr, 0, sizeof(arr)/sizeof(arr[0]));
-	memset(filename, 0 ,sizeof(filename));
-	split(arr, header, " ");
-	strcpy(filename, arr[1]+1);
-	if (strstr(arr[2], "HTTP") == NULL){
-		rst->status_code = 400;
-		return;
-	}
-	if (strcmp(arr[0], "GET") == 0 ){
+	memset(filename, 0, sizeof(filename));
+	memset(querystr, 0, sizeof(querystr));
+	memset(request_method, 0, sizeof(request_method));
+	header_parser(header, request_method, filename, querystr);
+	if (strcmp(request_method, "GET") == 0 ){
 		rst->download = "no";
 		if (strcmp(filename, "") == 0)  // url is the root of web server
         	strcpy(filename, "./");
@@ -32,9 +29,12 @@ void header_decode(char *header, struct result *rst) {
         	handler_404(rst);
 		else if (is_directory(filename))
 			directory_handler(filename, rst);
+		else if (is_cgi(filename))
+			cgi_handler(filename, querystr, rst);
 		else if (is_object(filename))
 			static_object_handler(filename, rst);
 		else {
+			printf("else ;;%s\n", filename);
 			rst->status_code = 200;
 		}
 		close(fd);
@@ -53,9 +53,7 @@ int header_encode(char *header, struct result *rst) {
 }
 
 void encode_status_code(char *header, struct result *rst) {
-	if (rst->status_code == 400)
-		strcat(header, "HTTP/1.1 400 Bad Requests\x0d\x0a");
-	else if (rst->status_code == 301) {
+	if (rst->status_code == 301) {
 		strcat(header, "HTTP/1.1 301 MOVE PERMANENTLY\x0d\x0a");
 		strcat(header, "Location: ");
 		strcat(header, rst->location);
@@ -159,7 +157,7 @@ void set_audio_content_type(char *extname, struct result *rst) {
 void set_video_content_type(char *extname, struct result *rst) {
 	if (strcmp(extname, ".mp4") == 0)
         rst->content_type = "video/mp4";
-    else if (strcmp(extname, ".mpeg") == 0)
+	else if (strcmp(extname, ".mpeg") == 0)
         rst->content_type = "video/mpeg";
 	else if (strcmp(extname, ".mpg") == 0)
         rst->content_type = "video/mpeg";

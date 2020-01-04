@@ -72,13 +72,14 @@ void serv_client(int fd, struct sockaddr_in *sin) {
 	int len;
 	char buf[2048];
 	struct result rst;
+	int header_max_sz = 1024;
 	memset(buf, 0, sizeof(buf));
 
 	printf(GRN_BOLD"<Start of connection>\n"RESET);
 	while((len = recv(fd, buf, sizeof(buf), 0)) > 0) {
 		header_decode(buf, &rst);
 		memset(buf, 0, sizeof(buf));
-		char header[rst.content_len+1024];
+		char header[rst.content_len+header_max_sz];
 		memset(header, 0, sizeof(header));
 		int header_len = header_encode(header, &rst);
 		printf("\tstatus code: %d\n", rst.status_code);

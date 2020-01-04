@@ -3,6 +3,7 @@
 void split(char **arr, char *str, const char *del);
 int is_directory(char *path);
 int is_object(char *path);
+int is_cgi(char *path);
 void read_directory(char *buf, char *dirname, int bufsz);
 void create_html(char *html, char *text);
 int index_html_exist(DIR *dir);

@@ -10,7 +10,6 @@
 
 void split(char **arr, char *str, const char *del) {
 	char *s = strtok(str, del);
-
 	while(s != NULL) {
 		*arr++ = s;
 		s = strtok(NULL, del);
@@ -39,6 +38,26 @@ int is_object(char *path) {
     return 0;
 }
 
+int is_cgi(char *path) {
+    char *dot = 0;
+    char *arr[16];
+    char filename[256];
+    for (int i=0; i<16; i++)
+        arr[i] = 0;
+    strcpy(filename, path);
+    dot = strrchr(filename, '.');
+    if (dot != 0)
+        if (strcmp(dot, ".cgi") == 0)
+            return 1;
+    split(arr, filename, "/");
+    for (int i=0; arr[i]!=0; i++) {
+        if (strstr(arr[i], "cgi") != NULL) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void read_directory(char *buf, char *dirname, int bufsz) {
     int old_stdout = 0;
     char command[128];
@@ -61,7 +80,7 @@ void create_html(char *html, char *text) {
     char *arr[128] = { };
     strcpy(html, "<html>\n<head>\
 \n<meta http-equiv='content-type' content='text/html; charset=utf-8'/>\
-\n<style>\nbody{font-family: monospace;\nwhite-space: pre;}</style>\
+\n<style>\nbody{font-family: monospace;\nfont-size: 16px;\nwhite-space: pre;}</style>\
 \n</head>\n<body>\n<hr/>");
     split(arr, text, "\n");
     for (int i=1 ; arr[i]!=0; i++) {
