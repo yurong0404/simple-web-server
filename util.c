@@ -17,18 +17,11 @@ void split(char **arr, char *str, const char *del) {
 	}
 }
 
-int check_directory(char *path) {
+int is_directory(char *path) {
     DIR *dir;
-    if (strcmp(path, "") == 0) {  // url is the root of web server
-        strcpy(path, "./");
-        return 1;
-    }
-    else if ((dir = opendir(path))) {
+    if ((dir = opendir(path))) {
         closedir(dir);
         return 1;
-    }
-    else if (errno == ENOENT) {
-        return 0;
     }
     return 0;
 }
@@ -43,9 +36,7 @@ int is_object(char *path) {
         }
         return 1;
     }
-    else {
-        return 0;
-    }
+    return 0;
 }
 
 void read_directory(char *buf, char *dirname, int bufsz) {
@@ -134,6 +125,8 @@ int is_image(char *extname) {
         return 1;
     else if (strcmp(extname, ".jpg") == 0)
         return 1;
+    else if (strcmp(extname, ".jpe") == 0)
+        return 1;
     else if (strcmp(extname, ".jpeg") == 0)
         return 1;
     else if (strcmp(extname, ".bmp") == 0)
@@ -142,7 +135,51 @@ int is_image(char *extname) {
         return 1;
     else if (strcmp(extname, ".tif") == 0)
         return 1;
-    else if (strcmp(extname, ".raw") == 0)
+    else if (strcmp(extname, ".tiff") == 0)
+        return 1;
+    else if (strcmp(extname, ".ico") == 0)
+        return 1;
+    else
+        return 0;
+}
+
+int is_audio(char *extname) {
+    if (strcmp(extname, ".mp3") == 0)
+        return 1;
+    else if (strcmp(extname, ".m4a") == 0)
+        return 1;
+    else if (strcmp(extname, ".wma") == 0)
+        return 1;
+    else if (strcmp(extname, ".wax") == 0)
+        return 1;
+    else if (strcmp(extname, ".wav") == 0)
+        return 1;
+    else if (strcmp(extname, ".ogg") == 0)
+        return 1;
+    else
+        return 0;
+}
+
+int is_video(char *extname) {
+    if (strcmp(extname, ".mp4") == 0)
+        return 1;
+    else if (strcmp(extname, ".mpeg") == 0)
+        return 1;
+    else if (strcmp(extname, ".mpg") == 0)
+        return 1;
+    else if (strcmp(extname, ".mpe") == 0)
+        return 1;
+    else if (strcmp(extname, ".avi") == 0)
+        return 1;
+    else if (strcmp(extname, ".flv") == 0)
+        return 1;
+    else if (strcmp(extname, ".ogv") == 0)
+        return 1;
+    else if (strcmp(extname, ".wmv") == 0)
+        return 1;
+    else if (strcmp(extname, ".wmx") == 0)
+        return 1;
+    else if (strcmp(extname, ".wvx") == 0)
         return 1;
     else
         return 0;
