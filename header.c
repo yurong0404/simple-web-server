@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <sys/stat.h> 
+#include <fcntl.h>
+#include <unistd.h>
 #include "util.h"
 #include "header.h"
 #include "handler.h"
@@ -22,19 +25,24 @@ void header_decode(char *header, struct result *rst) {
 		if (check_directory(filename)) {
 			directory_handler(filename, rst);
 		}
-		else if (check_object(filename)){
+		else if (is_object(filename)){
 			static_object_handler(filename, rst);
 		}
-		else 
+		else {
+			printf("str: %s\n", filename);
 			rst->status_code = 403;
+		}
 		return;
 	}
 }
 
-void header_encode(char *header, struct result *rst) {
+int header_encode(char *header, struct result *rst) {
 	encode_status_code(header, rst);
-	encode_content(header, rst->content);
-	//encode_content_length(header, rst->content);
+	encode_content_type(header, rst->content_type);
+	encode_content_length(header, rst->content_len);
+	int header_len = strlen(header);
+	encode_content(header, rst->content, rst->content_len);
+	return header_len;
 }
 
 void encode_status_code(char *header, struct result *rst) {
@@ -52,14 +60,61 @@ void encode_status_code(char *header, struct result *rst) {
 		strcat(header, "HTTP/1.1 200 OK\x0d\x0a");
 }
 
-void encode_content_length(char *header, char *content) {
-	strcat(header, "Content-Length: 0\x0d\x0a");
+void encode_content_length(char *header, int len) {
+	char str[10];
+	strcat(header, "Content-Length: ");
+	sprintf(str, "%d", len);
+	strcat(header, str);
+	strcat(header, "\x0d\x0a");
 }
 
-void encode_content(char *header, char *content) {
+void encode_content_type(char *header, char *type) {
+	if (type == 0)
+		return;
+	strcat(header, "Content-Type: ");
+	strcat(header, type);
+	strcat(header, "\x0d\x0a");
+}
+
+void encode_content(char *header, char *content, int len) {
+	if (content == 0)
+		return;
 	strcat(header, "\x0d\x0a");
 	if (content != 0) {
-		strcat(header, content);
+		memcpy(header+strlen(header), content, len);
 	}
 	free(content);
+}
+
+void set_result_content_from_file(char *path, struct result *rst) {
+	int fd = open(path, O_RDONLY);
+	int length = lseek(fd, 0, SEEK_END);
+	lseek(fd, 0, SEEK_SET);
+	char *buf = malloc(length);
+	memset(buf, 0, length);
+	read(fd, buf, length);
+	close(fd);
+	rst->content = malloc(length);
+	memcpy(rst->content, buf, length);
+	rst->content_len = length;
+	free(buf);
+}
+
+void set_image_content_type(char *extname, struct result *rst) {
+	if (strcmp(extname, ".png") == 0)
+        rst->content_type = "image/png";
+    else if (strcmp(extname, ".jpg") == 0)
+        rst->content_type = "image/jpg";
+    else if (strcmp(extname, ".jpeg") == 0)
+        rst->content_type = "image/jpeg";
+    else if (strcmp(extname, ".bmp") == 0)
+        rst->content_type = "image/bmp";
+    else if (strcmp(extname, ".gif") == 0)
+        rst->content_type = "image/gif";
+    else if (strcmp(extname, ".tif") == 0)
+        rst->content_type = "image/tif";
+    else if (strcmp(extname, ".raw") == 0)
+        rst->content_type = "image/raw";
+    else
+        rst->content_type = 0;
 }

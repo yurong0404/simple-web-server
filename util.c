@@ -34,7 +34,7 @@ int check_directory(char *path) {
 }
 
 // check the path is a file and it exists, not a directory
-int check_object(char *path) {
+int is_object(char *path) {
     if( access( path, F_OK ) != -1 ) {
         DIR *dir;
         if ((dir = opendir(path))) {
@@ -44,7 +44,6 @@ int check_object(char *path) {
         return 1;
     }
     else {
-        //printf("false");
         return 0;
     }
 }
@@ -100,19 +99,6 @@ int index_html_exist(DIR *dir) {
     return 0;
 }
 
-void find_index_html(char *path, struct result *rst) {
-    int fd;
-    char html[4096];
-    memset(html, 0, 4096);
-    fd = open("index.html" , R_OK);
-    read(fd, html, sizeof(html));
-    close(fd);
-    rst->status_code = 200;
-    rst->content = malloc(sizeof(html));
-    memset(rst->content, 0, sizeof(html));
-    strcpy(rst->content, html);
-}
-
 void create_index_html(char *path, struct result *rst) {
     char buf[2048];
     char html[4096];
@@ -120,8 +106,44 @@ void create_index_html(char *path, struct result *rst) {
     memset(html, 0, 4096);
     read_directory(buf, path, sizeof(buf));
     create_html(html, buf);
-    rst->content = malloc(sizeof(html));
-    memset(rst->content, 0, sizeof(html));
+    rst->content_len = (int) strlen(html);
+    rst->content = malloc(strlen(html));
+    memset(rst->content, 0, strlen(html));
     strcpy(rst->content, html);
     rst->status_code = 200;
+}
+
+int is_plain_text(char *extname) {
+    if (extname == 0)
+        return 1;
+    else if (strcmp(extname, ".txt") == 0)
+        return 1;
+    else
+        return 0;
+}
+
+int is_html(char *extname) {
+    if (strcmp(extname, ".html") == 0)
+        return 1;
+    else
+        return 0;
+}
+
+int is_image(char *extname) {
+    if (strcmp(extname, ".png") == 0)
+        return 1;
+    else if (strcmp(extname, ".jpg") == 0)
+        return 1;
+    else if (strcmp(extname, ".jpeg") == 0)
+        return 1;
+    else if (strcmp(extname, ".bmp") == 0)
+        return 1;
+    else if (strcmp(extname, ".gif") == 0)
+        return 1;
+    else if (strcmp(extname, ".tif") == 0)
+        return 1;
+    else if (strcmp(extname, ".raw") == 0)
+        return 1;
+    else
+        return 0;
 }

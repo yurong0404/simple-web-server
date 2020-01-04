@@ -8,6 +8,8 @@
 #include "header.h"
 #include "util.h"
 #include "handler.h"
+#define GRN_BOLD "\x1b[;32;1m"
+#define RESET "\x1b[0;m"
 
 void serv_client(int fd, struct sockaddr_in *sin);
 
@@ -72,18 +74,22 @@ void serv_client(int fd, struct sockaddr_in *sin) {
 	struct result rst;
 	memset(buf, 0, sizeof(buf));
 
-	printf("connected from %s:%d\n", inet_ntoa(sin->sin_addr), ntohs(sin->sin_port));
+	printf(GRN_BOLD"<Start of connection>\n"RESET);
 	while((len = recv(fd, buf, sizeof(buf), 0)) > 0) {
 		header_decode(buf, &rst);
 		memset(buf, 0, sizeof(buf));
-		header_encode(buf, &rst);
-
-		if(send(fd, buf, strlen(buf), 0) < 0) {
+		char header[rst.content_len+1024];
+		memset(header, 0, sizeof(header));
+		int header_len = header_encode(header, &rst);
+		printf("\tstatus code: %d\n", rst.status_code);
+		printf("\tcontent-type: %s\n", rst.content_type);
+		printf("\tcontent-length: %d\n", rst.content_len);
+		if(send(fd, header, header_len+rst.content_len+2, 0) < 0) {
 			perror("send");
 			exit(-1);
 		}
         break;
 	}
-	printf("disconnected from %s:%d\n", inet_ntoa(sin->sin_addr), ntohs(sin->sin_port));
+	printf(GRN_BOLD"<End of connection>\n"RESET);
 	return;
 }
