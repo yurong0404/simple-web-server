@@ -255,6 +255,7 @@ void set_cgi_env(struct cgi_env env) {
         strcpy(REQUEST_METHOD, "REQUEST_METHOD=");
         strcat(REQUEST_METHOD, env.request_method);
         putenv(REQUEST_METHOD);
+        free(REQUEST_METHOD);
     }
 
     if (env.querystr != 0) {
@@ -262,6 +263,7 @@ void set_cgi_env(struct cgi_env env) {
         strcpy(QUERY_STRING, "QUERY_STRING=");
         strcat(QUERY_STRING, env.querystr);
         putenv(QUERY_STRING);
+        free(QUERY_STRING);
     }
     
     if (env.url != 0) {
@@ -269,6 +271,7 @@ void set_cgi_env(struct cgi_env env) {
         strcpy(URL, "REQUEST_URI=");
         strcat(URL, env.url);
         putenv(URL);
+        free(URL);
     }
 
     if (env.content_type != 0) {
@@ -276,5 +279,6 @@ void set_cgi_env(struct cgi_env env) {
         strcpy(CONTENT_TYPE, "CONTENT_TYPE=");
         strcat(CONTENT_TYPE, env.content_type);
         putenv(CONTENT_TYPE);
+        free(CONTENT_TYPE);
     }
 }

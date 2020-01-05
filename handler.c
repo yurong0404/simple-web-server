@@ -123,6 +123,11 @@ void cgi_handler(char *header, int len, char *path, char *request_method, char *
         system(path);
         if (env.content != 0)
             printf("\n%s\n", env.content);
+        free(env.url);
+        free(env.request_method);
+        free(env.querystr);
+        free(env.content_type);
+        free(env.content);
         exit(0);
     }
     /* parent */

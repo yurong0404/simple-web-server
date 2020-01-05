@@ -2,11 +2,11 @@
 #define HEADER_H
 struct result {
 	int status_code;
-	char *content_type;
-	char *location;
-	char *content;
+	char *content_type;	// static memory, no need to free
+	char *location;	// malloc, need to free
+	char *content;	// malloc, need to free
 	int content_len;
-	char *download;
+	char *download;	//static memory, no need to free
 };
 
 struct cgi_env {
