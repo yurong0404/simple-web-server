@@ -75,9 +75,10 @@ void serv_client(int fd, struct sockaddr_in *sin) {
 	int header_max_sz = 1024;
 	memset(buf, 0, sizeof(buf));
 
-	printf(GRN_BOLD"<Start of connection>\n"RESET);
+	printf(GRN_BOLD"<Start of connection>"RESET);
+	printf("\n");
 	while((len = recv(fd, buf, sizeof(buf), 0)) > 0) {
-		header_decode(buf, &rst);
+		header_decode(buf, len, &rst);
 		memset(buf, 0, sizeof(buf));
 		char header[rst.content_len+header_max_sz];
 		memset(header, 0, sizeof(header));

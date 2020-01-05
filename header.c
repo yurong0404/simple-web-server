@@ -10,7 +10,7 @@
 #include "handler.h"
 
 
-void header_decode(char *header, struct result *rst) {
+void header_decode(char *header, int len, struct result *rst) {
 	char filename[128];
 	char querystr[256];
 	char request_method[16];
@@ -18,8 +18,8 @@ void header_decode(char *header, struct result *rst) {
 	memset(filename, 0, sizeof(filename));
 	memset(querystr, 0, sizeof(querystr));
 	memset(request_method, 0, sizeof(request_method));
-	header_parser(header, request_method, filename, querystr);
-	if (strcmp(request_method, "GET") == 0 ){
+	header_parser(header, len, request_method, filename, querystr);
+	if (strcmp(request_method, "GET") == 0 || strcmp(request_method, "POST") == 0){
 		rst->download = "no";
 		if (strcmp(filename, "") == 0)  // url is the root of web server
         	strcpy(filename, "./");
@@ -30,11 +30,10 @@ void header_decode(char *header, struct result *rst) {
 		else if (is_directory(filename))
 			directory_handler(filename, rst);
 		else if (is_cgi(filename))
-			cgi_handler(filename, querystr, rst);
+			cgi_handler(header, len, filename, request_method, querystr, rst);
 		else if (is_object(filename))
 			static_object_handler(filename, rst);
 		else {
-			printf("else ;;%s\n", filename);
 			rst->status_code = 200;
 		}
 		close(fd);

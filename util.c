@@ -50,7 +50,7 @@ int is_cgi(char *path) {
         if (strcmp(dot, ".cgi") == 0)
             return 1;
     split(arr, filename, "/");
-    for (int i=0; arr[i]!=0; i++) {
+    for (int i=0; arr[i+1]!=0; i++) {
         if (strstr(arr[i], "cgi") != NULL) {
             return 1;
         }
@@ -202,4 +202,79 @@ int is_video(char *extname) {
         return 1;
     else
         return 0;
+}
+
+void cgi_env_parse(char *header, int len, struct cgi_env *env) {
+    char *buf = malloc(len);
+    char *arr[128];
+    for (int i=0; i<128; i++)
+        arr[i] = 0;
+    char *substr;
+    memcpy(buf, header, len);
+    split(arr, buf, "\x0d\x0a");
+    int i;
+    for(i=0; arr[i]!=0;i++) {
+        if (strstr(arr[i], "GET") != NULL || strstr(arr[i], "POST") != NULL) {
+            char *arr2[8];
+            split(arr2, arr[i], " ");
+            env->request_method = malloc(strlen(arr2[0]));
+            strcpy(env->request_method, arr2[0]);
+            env->url = malloc(strlen(arr2[1]));
+            strcpy(env->url, arr2[1]);
+            if ((substr = strstr(arr2[1], "?")) !=NULL){
+                env->querystr = malloc(strlen(substr+1));
+                strcpy(env->querystr, substr+1);
+            }
+            else {
+                env->url = malloc(strlen(arr2[1]));
+                strcpy(env->url, arr2[1]);
+            }
+        }
+        if (strstr(arr[i], "Content-Type:") != NULL) {
+            char *arr4[2];
+            split(arr4, arr[i], " ");
+            env->content_type = malloc(strlen(arr4[1]));
+            strcpy(env->content_type, arr4[1]);
+        }
+        if (strstr(arr[i], "Content-Length:") != NULL) {
+            char *arr5[2];
+            split(arr5, arr[i], " ");
+            env->content_len = atoi(arr5[1]);
+        }
+    }
+    if (env->content_len != 0) {
+        env->content = malloc(strlen(arr[i-1]));
+        strcpy(env->content, arr[i-1]);
+    }
+    free(buf);
+}
+
+void set_cgi_env(struct cgi_env env) {
+    if (env.request_method != 0) {
+        char *REQUEST_METHOD = malloc(strlen(env.request_method)+strlen("REQUEST_METHOD="));
+        strcpy(REQUEST_METHOD, "REQUEST_METHOD=");
+        strcat(REQUEST_METHOD, env.request_method);
+        putenv(REQUEST_METHOD);
+    }
+
+    if (env.querystr != 0) {
+        char *QUERY_STRING = malloc(strlen(env.querystr)+strlen("QUERY_STRING="));
+        strcpy(QUERY_STRING, "QUERY_STRING=");
+        strcat(QUERY_STRING, env.querystr);
+        putenv(QUERY_STRING);
+    }
+    
+    if (env.url != 0) {
+        char *URL = malloc(strlen(env.url)+strlen("REQUEST_URI="));
+        strcpy(URL, "REQUEST_URI=");
+        strcat(URL, env.url);
+        putenv(URL);
+    }
+
+    if (env.content_type != 0) {
+        char *CONTENT_TYPE = malloc(strlen(env.content_type)+strlen("CONTENT_TYPE="));
+        strcpy(CONTENT_TYPE, "CONTENT_TYPE=");
+        strcat(CONTENT_TYPE, env.content_type);
+        putenv(CONTENT_TYPE);
+    }
 }

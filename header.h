@@ -9,7 +9,16 @@ struct result {
 	char *download;
 };
 
-void header_decode(char *header, struct result *rst);
+struct cgi_env {
+    char *url;
+    char *request_method;
+    char *querystr;
+    char *content_type;
+    int content_len;
+    char *content;
+};
+
+void header_decode(char *header, int len, struct result *rst);
 int header_encode(char *header, struct result *rst);
 void encode_status_code(char *header, struct result *rst);
 void encode_content_length(char *header, int len);

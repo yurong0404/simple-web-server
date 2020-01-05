@@ -105,23 +105,24 @@ void directory_handler(char *path, struct result *rst) {
         exit(-1);
     }
 }
-void cgi_handler(char *path, char *querystr, struct result *rst) {
-    // TODO : execve the cgi program
+void cgi_handler(char *header, int len, char *path, char *request_method, char *querystr, struct result *rst) {
     int pid;
     int fd[2];
-    char *QUERY_STRING = malloc(strlen(querystr)+strlen("QUERY_STRING="));
+    
     pipe(fd);
     if((pid = fork()) < 0) {
         perror("fork");
         return;
     }
     else if(pid == 0) {	/* child */
+        struct cgi_env env;
         dup2(fd[1], 1);
         close(fd[1]);
-        strcpy(QUERY_STRING, "QUERY_STRING=");
-        strcat(QUERY_STRING, querystr);
-        putenv(QUERY_STRING);
+        cgi_env_parse(header, len, &env);
+        set_cgi_env(env);
         system(path);
+        if (env.content != 0)
+            printf("\n%s\n", env.content);
         exit(0);
     }
     /* parent */
@@ -129,17 +130,23 @@ void cgi_handler(char *path, char *querystr, struct result *rst) {
     char buf[65536];
     memset(buf, 0, sizeof(buf));
     read(fd[0], buf, sizeof(buf));
-    
+    rst->content = malloc(strlen(buf));
+    memcpy(rst->content, buf, strlen(buf));
+    rst->content_type = "text/plain";
+    rst->content_len = strlen(buf);
+    rst->status_code = 200;
 }
 
-void header_parser(char *header, char *request_method, char *filename, char *querystr) {
+void header_parser(char *header, int len, char *request_method, char *filename, char *querystr) {
     char *arr[128];
     char *file_qstr[2];
+    char *buf = malloc(len);
     for (int i=0; i<128;i++)
         arr[i] = 0;
     for (int i=0; i<2;i++)
         file_qstr[i] = 0;
-    split(arr, header, " ");
+    memcpy(buf, header, len);
+    split(arr, buf, " ");
     strcpy(request_method, arr[0]);
     if (strcmp(arr[1]+1, "") == 0) {
         return;
@@ -150,4 +157,5 @@ void header_parser(char *header, char *request_method, char *filename, char *que
         return;
     }
     strcpy(querystr, file_qstr[1]);
+    free(buf);
 }

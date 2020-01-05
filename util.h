@@ -13,3 +13,5 @@ int is_html(char *extname);
 int is_image(char *extname);
 int is_audio(char *extname);
 int is_video(char *extname);
+void cgi_env_parse(char *header, int len, struct cgi_env *env);
+void set_cgi_env(struct cgi_env env);
